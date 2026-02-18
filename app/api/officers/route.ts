@@ -16,9 +16,17 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
-    const stationId = searchParams.get('station_id');
+    const stationIdParam = searchParams.get('station_id');
     const rank = searchParams.get('rank');
     const status = searchParams.get('status');
+
+    const requestedStationId = stationIdParam ? Number(stationIdParam) : null;
+    if (stationIdParam && (!Number.isFinite(requestedStationId) || requestedStationId <= 0)) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid station_id' },
+        { status: 400 }
+      );
+    }
 
     let query = `
       SELECT o.*, s.station_name, s.station_code
@@ -28,9 +36,27 @@ export async function GET(request: NextRequest) {
     `;
     const params: any[] = [];
 
-    if (user.role !== 'Admin' && user.station_id) {
+    const userStationId = user.station_id ? Number(user.station_id) : null;
+    if (user.role !== 'Admin' && userStationId) {
+      if (requestedStationId && requestedStationId !== userStationId) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Forbidden: cannot access officers from another station',
+            details: {
+              requestedStationId,
+              userStationId,
+            },
+          },
+          { status: 403 }
+        );
+      }
+
       query += ' AND o.station_id = ?';
-      params.push(user.station_id);
+      params.push(userStationId);
+    } else if (requestedStationId) {
+      query += ' AND o.station_id = ?';
+      params.push(requestedStationId);
     }
 
     if (search) {
@@ -57,11 +83,6 @@ export async function GET(request: NextRequest) {
         query += ' AND (o.first_name ILIKE ? OR o.middle_name ILIKE ? OR o.last_name ILIKE ? OR o.badge_number ILIKE ? OR s.station_name ILIKE ?)';
         params.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
-    }
-
-    if (stationId) {
-      query += ' AND o.station_id = ?';
-      params.push(stationId);
     }
 
     if (rank) {

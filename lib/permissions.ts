@@ -47,6 +47,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
   ],
   Officer: [
     'stations.read',
+    'officers.read',
     'cases.create',
     'cases.read',
     'cases.update',

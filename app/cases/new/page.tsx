@@ -202,12 +202,30 @@ export default function NewCasePage() {
   }, []);
 
   useEffect(() => {
-    if (form.station_id) {
-      fetch(`/api/officers?station_id=${form.station_id}`)
-        .then(res => res.json())
-        .then(data => { if (data.success) setOfficers(data.data); })
-        .catch(err => console.error(err));
+    if (!form.station_id) {
+      setOfficers([]);
+      setForm(prev => (prev.officer_id ? { ...prev, officer_id: '' } : prev));
+      return;
     }
+
+    // Station changed: clear selected officer and fetch new list
+    setForm(prev => (prev.officer_id ? { ...prev, officer_id: '' } : prev));
+
+    const controller = new AbortController();
+    fetch(`/api/officers?station_id=${encodeURIComponent(form.station_id)}`, {
+      signal: controller.signal,
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setOfficers(data.data || []);
+        else setOfficers([]);
+      })
+      .catch(err => {
+        if (err?.name === 'AbortError') return;
+        console.error(err);
+      });
+
+    return () => controller.abort();
   }, [form.station_id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

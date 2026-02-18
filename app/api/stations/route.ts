@@ -25,6 +25,12 @@ export async function GET(request: NextRequest) {
                  FROM police_stations WHERE 1=1`;
     const params: any[] = [];
 
+    // Non-admin users should only see their assigned station.
+    if (user.role !== 'Admin' && user.station_id) {
+      query += ' AND id = ?';
+      params.push(user.station_id);
+    }
+
     if (search) {
       query += ` AND (station_name ILIKE ? OR station_code ILIKE ? OR district ILIKE ?
                   OR municipality ILIKE ? OR state_province ILIKE ? OR address_line ILIKE ?)`;

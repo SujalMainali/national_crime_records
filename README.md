@@ -498,6 +498,13 @@ Triggered from the case detail page (`/cases/:id`) via a "Generate FIR Report" b
 
 ## File Uploads
 
+This project uses a single upload endpoint at `POST /api/upload`.
+
+- **On Vercel**: uploads go to **Vercel Blob Storage** and the API returns a public Blob URL.
+- **Locally (no Blob token)**: uploads fall back to writing under `public/uploads/...`.
+
+The returned `data.url` should be stored directly in the database fields such as `photo`, `signature`, and `evidence.file_path`.
+
 File uploads are handled by `/api/upload` (POST) and stored in `public/uploads/`.
 
 ### Supported Categories & Storage
@@ -545,6 +552,12 @@ File uploads are handled by `/api/upload` (POST) and stored in `public/uploads/`
 ---
 
 ## Environment Variables
+
+### Vercel Blob
+
+- `BLOB_READ_WRITE_TOKEN` – required for uploading to Vercel Blob.
+   - In Vercel: create a Blob store and add the token as an environment variable.
+   - Locally: set this if you want uploads to go to Blob while developing.
 
 Create a `.env.local` file in the project root:
 

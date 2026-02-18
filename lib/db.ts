@@ -13,6 +13,10 @@ type PgParam =
 const connectionString =
   process.env.DATABASE_URL || process.env.DB_CONNECTION_STRING || '';
 
+const allowFallbackToLocal =
+  process.env.ALLOW_DB_FALLBACK === 'true' ||
+  process.env.NODE_ENV !== 'production';
+
 let warnedNoPrimary = false;
 let warnedPrimaryFallback = false;
 
@@ -126,6 +130,12 @@ export async function executeQuery<T = unknown>(
         return await runWithPool(primaryPool);
       } catch (error) {
         if (isConnectionUnavailableError(error)) {
+          if (!allowFallbackToLocal) {
+            throw new Error(
+              'Primary database is unreachable and fallback is disabled in production. Check DATABASE_URL and network access from your hosting provider.'
+            );
+          }
+
           if (!warnedPrimaryFallback) {
             warnedPrimaryFallback = true;
             console.warn(
@@ -139,6 +149,12 @@ export async function executeQuery<T = unknown>(
         // surface the error instead of silently switching databases.
         throw error;
       }
+    }
+
+    if (!allowFallbackToLocal) {
+      throw new Error(
+        'DATABASE_URL is not set and local DB fallback is disabled in production. Set DATABASE_URL (or DB_CONNECTION_STRING) in your deployment environment.'
+      );
     }
 
     return await runWithPool(fallbackPool);
@@ -169,12 +185,25 @@ export async function testConnection(): Promise<boolean> {
         return true;
       } catch (error) {
         if (isConnectionUnavailableError(error)) {
+          if (!allowFallbackToLocal) {
+            console.error(
+              'Primary database unavailable and fallback is disabled in production.'
+            );
+            return false;
+          }
           console.warn('Primary database unavailable, testing fallback.');
         } else {
           console.error('Primary database connection failed:', error);
           return false;
         }
       }
+    }
+
+    if (!allowFallbackToLocal) {
+      console.error(
+        'DATABASE_URL is not set and fallback is disabled in production.'
+      );
+      return false;
     }
 
     const client = await fallbackPool.connect();
