@@ -75,22 +75,19 @@ export default function EditPersonPage() {
     // Check role-based access
     const canEdit = user?.role === 'StationAdmin' || user?.role === 'Officer';
 
-    // Load location data
+    // Load location data + person data in parallel
     useEffect(() => {
-        fetch("/nepal_location.json")
-            .then((res) => res.json())
-            .then((data) => setLocationData(data))
-            .catch((err) => console.error("Failed to load location data:", err));
-    }, []);
+        Promise.all([
+            fetch("/nepal_location.json").then((res) => res.json()),
+            fetch(`/api/persons/${personId}`).then((res) => res.json()),
+        ])
+            .then(([locData, personJson]) => {
+                // Location data
+                setLocationData(locData);
 
-    // Load person data
-    useEffect(() => {
-        async function fetchPerson() {
-            try {
-                const res = await fetch(`/api/persons/${personId}`);
-                const json = await res.json();
-                if (json.success && json.data) {
-                    const p = json.data;
+                // Person data
+                if (personJson.success && personJson.data) {
+                    const p = personJson.data;
                     setForm({
                         first_name: p.first_name || "",
                         middle_name: p.middle_name || "",
@@ -112,13 +109,11 @@ export default function EditPersonPage() {
                 } else {
                     setError("Person not found");
                 }
-            } catch {
+            })
+            .catch(() => {
                 setError("Failed to load person data");
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchPerson();
+            })
+            .finally(() => setLoading(false));
     }, [personId]);
 
     // Update districts when province changes

@@ -79,12 +79,52 @@ export default function EditStationPage() {
       .catch((err) => console.error("Failed to load location data:", err));
   }, []);
 
-  // Load station data
+  // Load station + officers data in parallel
   useEffect(() => {
-    if (stationId) {
-      fetchStation();
-      fetchOfficers();
-    }
+    if (!stationId) return;
+
+    Promise.all([
+      fetch(`/api/stations/${stationId}`).then((res) => res.json()),
+      fetch(`/api/officers?station_id=${stationId}`).then((res) => res.json()),
+    ])
+      .then(([stationJson, officersJson]) => {
+        // Station data
+        if (stationJson.success && stationJson.data) {
+          const station = stationJson.data;
+          setStationName(station.station_name);
+          setForm({
+            station_code: station.station_code || "",
+            station_name: station.station_name || "",
+            state: station.state || station.state_province || "",
+            district: station.district || "",
+            municipality: station.municipality || "",
+            ward: station.ward?.toString() || station.ward_no?.toString() || "",
+            address: station.address || station.address_line || "",
+            photo: station.photo || "",
+            contact_number: station.contact_number || station.phone || "",
+            email: station.email || "",
+            jurisdiction: station.jurisdiction || station.jurisdiction_area || "",
+            incharge_officer_id: station.incharge_officer_id?.toString() || "",
+            established_date: station.established_date ? station.established_date.split('T')[0] : "",
+            is_active: station.is_active !== false,
+          });
+          if (station.photo) {
+            setPhotoPreview(station.photo);
+          }
+        } else {
+          setError("Station not found");
+        }
+
+        // Officers data
+        if (officersJson.success) {
+          setOfficers(officersJson.data || []);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load data:", err);
+        setError("Failed to load station data");
+      })
+      .finally(() => setLoading(false));
   }, [stationId]);
 
   // Helper: fuzzy match location names (handles case + "PROVINCE" suffix differences)
@@ -93,13 +133,12 @@ export default function EditStationPage() {
     return normalize(dbName) === normalize(jsonName);
   }
 
-  // Update districts when province/locationData changes or when form.state is set from fetch
+  // Update districts when province/locationData changes
   useEffect(() => {
     if (locationData && form.state) {
       const province = locationData.provinceList.find((p) => fuzzyMatchName(form.state, p.name));
       if (province) {
         setDistricts(province.districtList || []);
-        // If form.state doesn't exactly match JSON name, update it to match
         if (form.state !== province.name) {
           setForm((prev) => ({ ...prev, state: province.name }));
         }
@@ -113,63 +152,12 @@ export default function EditStationPage() {
       const district = districts.find((d) => fuzzyMatchName(form.district, d.name));
       if (district) {
         setMunicipalities(district.municipalityList || []);
-        // If form.district doesn't exactly match JSON name, update it to match
         if (form.district !== district.name) {
           setForm((prev) => ({ ...prev, district: district.name }));
         }
       }
     }
   }, [form.district, districts]);
-
-  async function fetchStation() {
-    try {
-      const res = await fetch(`/api/stations/${stationId}`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        const station = json.data;
-        setStationName(station.station_name);
-        // Map DB values to the form — the fuzzy matching in useEffects will
-        // auto-correct province/district names to match the JSON values
-        setForm({
-          station_code: station.station_code || "",
-          station_name: station.station_name || "",
-          state: station.state || station.state_province || "",
-          district: station.district || "",
-          municipality: station.municipality || "",
-          ward: station.ward?.toString() || station.ward_no?.toString() || "",
-          address: station.address || station.address_line || "",
-          photo: station.photo || "",
-          contact_number: station.contact_number || station.phone || "",
-          email: station.email || "",
-          jurisdiction: station.jurisdiction || station.jurisdiction_area || "",
-          incharge_officer_id: station.incharge_officer_id?.toString() || "",
-          established_date: station.established_date ? station.established_date.split('T')[0] : "",
-          is_active: station.is_active !== false,
-        });
-        if (station.photo) {
-          setPhotoPreview(station.photo);
-        }
-      } else {
-        setError("Station not found");
-      }
-    } catch (err) {
-      setError("Failed to load station data");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchOfficers() {
-    try {
-      const res = await fetch(`/api/officers?station_id=${stationId}`);
-      const json = await res.json();
-      if (json.success) {
-        setOfficers(json.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to load officers:", err);
-    }
-  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value, type } = e.target;

@@ -98,31 +98,68 @@ export default function EditOfficerPage() {
     "Inspector General",
   ];
 
-  // Load stations
-  useEffect(() => {
-    fetch("/api/stations")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json?.success && json?.data) {
-          setStations(json.data);
-        }
-      })
-      .catch((err) => console.error("Failed to load stations:", err));
-  }, []);
-
-  // Load location data for permanent address
-  useEffect(() => {
-    fetch("/nepal_location.json")
-      .then((res) => res.json())
-      .then((data) => setLocationData(data))
-      .catch((err) => console.error("Failed to load location data:", err));
-  }, []);
-
   // Fuzzy match location names (handles case + "PROVINCE" suffix differences)
   function fuzzyMatchName(dbName: string, jsonName: string): boolean {
     const normalize = (s: string) => s.toLowerCase().replace(/\s*province\s*/gi, '').trim();
     return normalize(dbName) === normalize(jsonName);
   }
+
+  // Load all initial data in parallel (stations + location + officer)
+  useEffect(() => {
+    if (!officerId) return;
+
+    Promise.all([
+      fetch("/api/stations").then((res) => res.json()),
+      fetch("/nepal_location.json").then((res) => res.json()),
+      fetch(`/api/officers/${officerId}`).then((res) => res.json()),
+    ])
+      .then(([stationsJson, locData, officerJson]) => {
+        // Stations
+        if (stationsJson?.success && stationsJson?.data) {
+          setStations(stationsJson.data);
+        }
+
+        // Location data
+        setLocationData(locData);
+
+        // Officer data
+        if (officerJson.success && officerJson.data) {
+          const officer = officerJson.data;
+          setOfficerName(`${officer.rank || ''} ${officer.first_name} ${officer.last_name}`.trim());
+          setSignature(officer.signature || null);
+          if (officer.signature) setSignaturePreview(officer.signature);
+          const photoData = officer.photo || "";
+          if (photoData) setPhotoPreview(photoData);
+          setForm({
+            first_name: officer.first_name || "",
+            middle_name: officer.middle_name || "",
+            last_name: officer.last_name || "",
+            rank: officer.rank || "",
+            badge_number: officer.badge_number || "",
+            station_id: officer.station_id?.toString() || "",
+            department: officer.department || "",
+            contact_number: officer.contact_number || "",
+            email: officer.email || "",
+            gender: officer.gender || "",
+            date_of_joining: officer.date_of_joining ? officer.date_of_joining.split('T')[0] : "",
+            service_status: officer.service_status || "Active",
+            state_province: officer.state_province || "",
+            district: officer.district || "",
+            municipality: officer.municipality || "",
+            ward_no: officer.ward_no?.toString() || "",
+            address_line: officer.address_line || "",
+            photo: photoData,
+          });
+        } else {
+          setError("Officer not found");
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load data:", err);
+        setError("Failed to load officer data");
+      })
+      .finally(() => setLoading(false));
+  }, [officerId]);
 
   // Update districts when province/locationData changes
   useEffect(() => {
@@ -150,53 +187,8 @@ export default function EditOfficerPage() {
     }
   }, [form.district, districts]);
 
-  // Load officer data
-  useEffect(() => {
-    if (officerId) {
-      fetchOfficer();
-    }
-  }, [officerId]);
 
-  async function fetchOfficer() {
-    try {
-      const res = await fetch(`/api/officers/${officerId}`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        const officer = json.data;
-        setOfficerName(`${officer.rank || ''} ${officer.first_name} ${officer.last_name}`.trim());
-        setSignature(officer.signature || null);
-        if (officer.signature) setSignaturePreview(officer.signature);
-        const photoData = officer.photo || "";
-        if (photoData) setPhotoPreview(photoData);
-        setForm({
-          first_name: officer.first_name || "",
-          middle_name: officer.middle_name || "",
-          last_name: officer.last_name || "",
-          rank: officer.rank || "",
-          badge_number: officer.badge_number || "",
-          station_id: officer.station_id?.toString() || "",
-          department: officer.department || "",
-          contact_number: officer.contact_number || "",
-          email: officer.email || "",
-          gender: officer.gender || "",
-          date_of_joining: officer.date_of_joining ? officer.date_of_joining.split('T')[0] : "",
-          service_status: officer.service_status || "Active",
-          state_province: officer.state_province || "",
-          district: officer.district || "",
-          municipality: officer.municipality || "",
-          ward_no: officer.ward_no?.toString() || "",
-          address_line: officer.address_line || "",
-          photo: photoData,
-        });
-      } else {
-        setError("Officer not found");
-      }
-    } catch (err) {
-      setError("Failed to load officer data");
-    } finally {
-      setLoading(false);
-    }
-  }
+
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
