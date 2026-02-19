@@ -14,14 +14,24 @@ export async function GET(
 
     const { id } = await params;
 
-    // Fetch case with station name
+    // Fetch case with station name and officer details
     const caseData = await queryOne<any>(
-      `SELECT c.case_id as id, c.fir_no, c.crime_type, c.case_status, c.case_priority, 
-              c.fir_date_time, c.incident_date_time, c.incident_location, c.summary as description,
-              c.station_id,
-              s.station_name, s.station_code
+      `SELECT c.case_id as id, c.fir_no, c.crime_type, c.crime_section,
+              c.case_status, c.case_priority, 
+              c.fir_date_time, c.incident_date_time, c.incident_location,
+              c.incident_district, c.summary, c.summary as description,
+              c.station_id, c.created_at, c.updated_at,
+              s.station_name, s.station_code,
+              o.id as officer_id,
+              CONCAT(o.first_name, ' ', o.last_name) as officer_name,
+              o.rank as officer_rank,
+              o.badge_number as officer_badge,
+              o.contact_number as officer_contact,
+              o.department as officer_department,
+              o.photo as officer_photo
        FROM cases c
        LEFT JOIN police_stations s ON c.station_id = s.id
+       LEFT JOIN officers o ON c.officer_id = o.id
        WHERE c.case_id = $1`,
       [id]
     );

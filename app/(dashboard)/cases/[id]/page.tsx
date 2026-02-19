@@ -335,30 +335,143 @@ export default function CaseDetailsPage() {
       <div className="animate-fade-in">
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left Column - Main Details */}
             <div className="md:col-span-2 space-y-6">
+              {/* Description / Summary */}
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
-                <h3 className="text-lg font-semibold text-[#0c2340] mb-4">Incident Details</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs text-slate-500 uppercase font-bold">Location</label>
-                    <p className="text-[#1e3a5f] mt-1">{caseData.incident_location}</p>
+                <h3 className="text-lg font-semibold text-[#0c2340] mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#d4a853]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  Case Description
+                </h3>
+                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">
+                  {caseData.summary || caseData.description || 'No description available.'}
+                </p>
+              </div>
+
+              {/* Incident Details */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+                <h3 className="text-lg font-semibold text-[#0c2340] mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#d4a853]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  Incident Details
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">Location</label>
+                    <p className="text-[#1e3a5f] mt-1 font-medium">{caseData.incident_location || 'N/A'}</p>
                   </div>
-                  <div>
-                    <label className="text-xs text-slate-500 uppercase font-bold">Date & Time</label>
-                    <p className="text-[#1e3a5f] mt-1">{new Date(caseData.incident_date_time).toLocaleString()}</p>
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">District</label>
+                    <p className="text-[#1e3a5f] mt-1 font-medium">{caseData.incident_district || 'N/A'}</p>
                   </div>
-                  <div>
-                    <label className="text-xs text-slate-500 uppercase font-bold">Description</label>
-                    <p className="text-slate-700 mt-1 leading-relaxed whitespace-pre-wrap">{caseData.summary}</p>
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">Date & Time</label>
+                    <p className="text-[#1e3a5f] mt-1 font-medium">{caseData.incident_date_time ? new Date(caseData.incident_date_time).toLocaleString() : 'N/A'}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">Section of Law</label>
+                    <p className="text-[#1e3a5f] mt-1 font-medium">{caseData.crime_section || 'N/A'}</p>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Right Column - Officer & Info */}
             <div className="space-y-6">
+              {/* Assigned Officer Card */}
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
-                <h3 className="text-lg font-semibold text-[#0c2340] mb-4">Case Attributes</h3>
-                <p className="text-sm text-slate-500">No additional attributes set.</p>
+                <h3 className="text-lg font-semibold text-[#0c2340] mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#d4a853]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  Assigned Officer
+                </h3>
+                {caseData.officer_name ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#0c2340] to-[#1e3a5f] flex items-center justify-center text-white text-lg font-bold shadow-md">
+                        {caseData.officer_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-[#0c2340] font-bold text-base">{caseData.officer_name}</p>
+                        <p className="text-slate-500 text-sm">{caseData.officer_rank || 'Officer'}</p>
+                      </div>
+                    </div>
+                    <div className="border-t border-slate-100 pt-3 space-y-2">
+                      {caseData.officer_badge && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
+                          <span className="text-slate-500">Badge:</span>
+                          <span className="text-[#1e3a5f] font-medium">{caseData.officer_badge}</span>
+                        </div>
+                      )}
+                      {caseData.officer_department && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                          <span className="text-slate-500">Dept:</span>
+                          <span className="text-[#1e3a5f] font-medium">{caseData.officer_department}</span>
+                        </div>
+                      )}
+                      {caseData.officer_contact && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                          <span className="text-slate-500">Contact:</span>
+                          <span className="text-[#1e3a5f] font-medium">{caseData.officer_contact}</span>
+                        </div>
+                      )}
+                    </div>
+                    {caseData.officer_id && (
+                      <Link
+                        href={`/officers/${caseData.officer_id}`}
+                        className="block mt-2 text-center px-4 py-2 bg-[#0c2340]/5 hover:bg-[#0c2340]/10 text-[#0c2340] rounded-xl text-sm font-medium transition-all border border-[#0c2340]/10"
+                      >
+                        View Officer Profile →
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">No officer assigned.</p>
+                )}
+              </div>
+
+              {/* Case Information Card */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+                <h3 className="text-lg font-semibold text-[#0c2340] mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#d4a853]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Case Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                    <span className="text-slate-500">FIR Date</span>
+                    <span className="text-[#1e3a5f] font-medium">{caseData.fir_date_time ? new Date(caseData.fir_date_time).toLocaleDateString() : 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                    <span className="text-slate-500">Crime Type</span>
+                    <span className="text-[#1e3a5f] font-medium">{caseData.crime_type || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                    <span className="text-slate-500">Station</span>
+                    <span className="text-[#1e3a5f] font-medium">{caseData.station_name || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                    <span className="text-slate-500">Priority</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${caseData.case_priority === 'Critical' ? 'bg-red-100 text-red-700' :
+                        caseData.case_priority === 'High' ? 'bg-orange-100 text-orange-700' :
+                          caseData.case_priority === 'Low' ? 'bg-slate-100 text-slate-600' :
+                            'bg-blue-100 text-blue-700'
+                      }`}>{caseData.case_priority}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                    <span className="text-slate-500">Status</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${caseData.case_status === 'Closed' ? 'bg-green-100 text-green-700' :
+                        caseData.case_status === 'Registered' ? 'bg-blue-100 text-blue-700' :
+                          'bg-yellow-100 text-yellow-700'
+                      }`}>{caseData.case_status}</span>
+                  </div>
+                  {caseData.updated_at && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500">Last Updated</span>
+                      <span className="text-[#1e3a5f] font-medium">{new Date(caseData.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
