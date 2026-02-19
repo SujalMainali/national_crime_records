@@ -102,7 +102,7 @@ export async function POST(
              VALUES ($1, 'Supplementary Statement', $2, $3)`,
             [
                 caseId,
-                `Supplementary statement recorded for ${casePerson.role}: ${personName} (Person ID: ${casePerson.person_id})`,
+                `Supplementary statement recorded for ${casePerson.role}: ${personName}`,
                 user.id
             ]
         );

@@ -35,10 +35,10 @@ export default function CaseDetailsPage() {
   const [editForm, setEditForm] = useState({
     case_status: '',
     case_priority: '',
-    summary: ''
   });
 
   const [actionType, setActionType] = useState('Status Change');
+  const [actionDescription, setActionDescription] = useState('');
   const [generatingPDF, setGeneratingPDF] = useState(false);
 
   // Handle returned person/evidence from full pages
@@ -65,7 +65,6 @@ export default function CaseDetailsPage() {
         setEditForm({
           case_status: data.data.case_status,
           case_priority: data.data.case_priority,
-          summary: data.data.description || data.data.summary
         });
       } catch (err: any) {
         setError(err.message);
@@ -137,12 +136,13 @@ export default function CaseDetailsPage() {
       const res = await fetch(`/api/cases/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify({ ...editForm, action_description: actionDescription.trim() || undefined })
       });
 
       if (res.ok) {
         setCaseData((prev: any) => ({ ...prev, ...editForm }));
         setTimelineKey(prev => prev + 1);
+        setActionDescription('');
         setShowEditModal(false);
       } else {
         const err = await res.json();
@@ -422,6 +422,8 @@ export default function CaseDetailsPage() {
                 <option value="Create New Person">Create & Link New Person</option>
                 <option value="Add Evidence">Add Evidence</option>
                 <option value="Add Supplementary Statement">Add Supplementary Statement</option>
+                <option value="Log Investigation">Log Investigation Activity</option>
+                <option value="Arrest Update">Arrest Update</option>
               </select>
             </div>
 
@@ -457,11 +459,12 @@ export default function CaseDetailsPage() {
                 </div>
 
                 <label className="block">
-                  <span className="text-xs text-slate-500 font-bold uppercase">Incident Summary</span>
+                  <span className="text-xs text-slate-500 font-bold uppercase">Action Description</span>
                   <textarea
-                    value={editForm.summary}
-                    onChange={e => setEditForm({ ...editForm, summary: e.target.value })}
-                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[#1e3a5f] h-32 resize-none focus:ring-2 focus:ring-[#0c2340]/30 focus:border-[#0c2340]"
+                    value={actionDescription}
+                    onChange={e => setActionDescription(e.target.value)}
+                    placeholder="Describe what was changed and why..."
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[#1e3a5f] h-24 resize-none focus:ring-2 focus:ring-[#0c2340]/30 focus:border-[#0c2340]"
                   />
                 </label>
 
@@ -559,6 +562,114 @@ export default function CaseDetailsPage() {
                 onSuccess={() => handleFormSuccess('statement')}
                 onCancel={() => setShowEditModal(false)}
               />
+            )}
+
+            {(actionType === 'Log Investigation' || actionType === 'Arrest Update') && (
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setUpdating(true);
+                try {
+                  const res = await fetch(`/api/cases/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      case_status: editForm.case_status,
+                      case_priority: editForm.case_priority,
+                      action_type: actionType,
+                      action_description: actionDescription.trim() || `${actionType} recorded`,
+                    })
+                  });
+
+                  if (res.ok) {
+                    setCaseData((prev: any) => ({ ...prev, case_status: editForm.case_status, case_priority: editForm.case_priority }));
+                    setTimelineKey(prev => prev + 1);
+                    setActionDescription('');
+                    setShowEditModal(false);
+                  } else {
+                    const err = await res.json();
+                    alert(err.message || 'Failed to update');
+                  }
+                } catch (err) {
+                  console.error(err);
+                  alert('Error updating case');
+                } finally {
+                  setUpdating(false);
+                }
+              }} className="space-y-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">
+                      {actionType === 'Log Investigation' && '🔍'}
+                      {actionType === 'Arrest Update' && '🚔'}
+                    </span>
+                    <h4 className="text-sm font-bold text-[#0c2340]">{actionType}</h4>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {actionType === 'Log Investigation' && 'Record investigation activity, interviews, or field work for this case.'}
+                    {actionType === 'Arrest Update' && 'Log an arrest, custody update, or bail-related action.'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="block">
+                    <span className="text-xs text-slate-500 font-bold uppercase">Update Status</span>
+                    <select
+                      value={editForm.case_status}
+                      onChange={e => setEditForm({ ...editForm, case_status: e.target.value })}
+                      className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[#1e3a5f] focus:ring-2 focus:ring-[#0c2340]/30 focus:border-[#0c2340]"
+                    >
+                      <option value="Registered">Registered</option>
+                      <option value="Under Investigation">Under Investigation</option>
+                      <option value="Charge Sheet Filed">Charge Sheet Filed</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500 font-bold uppercase">Priority</span>
+                    <select
+                      value={editForm.case_priority}
+                      onChange={e => setEditForm({ ...editForm, case_priority: e.target.value })}
+                      className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[#1e3a5f] focus:ring-2 focus:ring-[#0c2340]/30 focus:border-[#0c2340]"
+                    >
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label className="block">
+                  <span className="text-xs text-slate-500 font-bold uppercase">Action Description <span className="text-red-500">*</span></span>
+                  <textarea
+                    value={actionDescription}
+                    onChange={e => setActionDescription(e.target.value)}
+                    placeholder={
+                      actionType === 'Log Investigation' ? 'Describe investigation activity, findings, or next steps...' :
+                        'Describe arrest details, custody information, or bail status...'
+                    }
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[#1e3a5f] h-28 resize-none focus:ring-2 focus:ring-[#0c2340]/30 focus:border-[#0c2340]"
+                    required
+                  />
+                </label>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2 text-sm text-slate-600 hover:text-[#0c2340]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating || !actionDescription.trim()}
+                    className="px-6 py-2 bg-[#0c2340] hover:bg-[#1e3a5f] text-white rounded-lg text-sm font-bold shadow-lg disabled:opacity-50"
+                  >
+                    {updating ? 'Saving...' : `Record ${actionType}`}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>

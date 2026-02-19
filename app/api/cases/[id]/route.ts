@@ -67,6 +67,7 @@ export async function PUT(
 
     const { id } = await params;
     const data = await request.json();
+    const { action_type: customActionType, action_description: customActionDescription, ...updateData } = data;
 
     // Fetch current state
     const currentCase = await queryOne<any>(
@@ -99,53 +100,77 @@ export async function PUT(
              summary = COALESCE($3, summary),
              updated_at = CURRENT_TIMESTAMP
          WHERE case_id = $4`,
-      [data.case_status, data.case_priority, data.summary, id]
+      [updateData.case_status, updateData.case_priority, updateData.summary, id]
     );
 
     // Track Status Change
-    if (data.case_status && data.case_status !== fullCurrentCase.case_status) {
+    if (updateData.case_status && updateData.case_status !== fullCurrentCase.case_status) {
+      const desc = customActionDescription
+        ? `Case status updated from ${fullCurrentCase.case_status} to ${updateData.case_status}. ${customActionDescription}`
+        : `Case status updated from ${fullCurrentCase.case_status} to ${updateData.case_status}`;
       await executeQuery(
         `INSERT INTO fir_track_records 
              (case_id, action_type, action_description, old_status, new_status, performed_by_user_id)
-             VALUES ($1, 'Status Change', $2, $3, $4, $5)`,
+             VALUES ($1, $2, $3, $4, $5, $6)`,
         [
           id,
-          `Case status updated from ${fullCurrentCase.case_status} to ${data.case_status}`,
+          customActionType || 'Status Change',
+          desc,
           fullCurrentCase.case_status,
-          data.case_status,
+          updateData.case_status,
           user.id
         ]
       );
     }
 
     // Track Priority Change
-    if (data.case_priority && data.case_priority !== fullCurrentCase.case_priority) {
+    if (updateData.case_priority && updateData.case_priority !== fullCurrentCase.case_priority) {
+      const desc = customActionDescription
+        ? `Case priority updated from ${fullCurrentCase.case_priority} to ${updateData.case_priority}. ${customActionDescription}`
+        : `Case priority updated from ${fullCurrentCase.case_priority} to ${updateData.case_priority}`;
       await executeQuery(
         `INSERT INTO fir_track_records 
              (case_id, action_type, action_description, old_status, new_status, performed_by_user_id)
-             VALUES ($1, 'Priority Change', $2, $3, $4, $5)`,
+             VALUES ($1, $2, $3, $4, $5, $6)`,
         [
           id,
-          `Case priority updated from ${fullCurrentCase.case_priority} to ${data.case_priority}`,
+          customActionType || 'Priority Change',
+          desc,
           fullCurrentCase.case_priority,
-          data.case_priority,
+          updateData.case_priority,
           user.id
         ]
       );
     }
 
     // Track Summary/Description Update
-    if (data.summary && data.summary !== fullCurrentCase.summary) {
+    if (updateData.summary && updateData.summary !== fullCurrentCase.summary) {
       await executeQuery(
         `INSERT INTO fir_track_records 
              (case_id, action_type, action_description, performed_by_user_id)
              VALUES ($1, 'Description Update', $2, $3)`,
         [
           id,
-          `Case description/summary was updated`,
+          customActionDescription || `Case description/summary was updated`,
           user.id
         ]
       );
+    }
+
+    // If custom action type provided but no status/priority/summary changed, still log the action
+    if (customActionType && customActionDescription) {
+      const statusChanged = updateData.case_status && updateData.case_status !== fullCurrentCase.case_status;
+      const priorityChanged = updateData.case_priority && updateData.case_priority !== fullCurrentCase.case_priority;
+      const summaryChanged = updateData.summary && updateData.summary !== fullCurrentCase.summary;
+
+      if (!statusChanged && !priorityChanged && !summaryChanged) {
+        await executeQuery(
+          `INSERT INTO fir_track_records 
+               (case_id, action_type, action_description, performed_by_user_id)
+               VALUES ($1, $2, $3, $4)`,
+          [id, customActionType, customActionDescription, user.id]
+        );
+      }
     }
 
 

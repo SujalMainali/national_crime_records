@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
     const evidenceId = Array.isArray(result) && result.length > 0 ? result[0].id : null;
 
     // Log action
+    const evidenceDesc = data.description ? `: ${data.description}` : '';
     await executeQuery(
       `INSERT INTO fir_track_records 
        (case_id, action_type, action_description, performed_by_user_id)
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       [
         data.case_id,
         'Add Evidence',
-        `Evidence ${evidenceCode} collected`,
+        `Evidence ${evidenceCode} collected${evidenceDesc}`,
         user.id,
       ]
     );
