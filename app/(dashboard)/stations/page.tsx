@@ -44,11 +44,16 @@ export default function StationsPage() {
   }, []);
 
   useEffect(() => {
-    if (shouldShowList) {
-      fetchStations();
-    } else {
+    if (!shouldShowList) {
       setStations([]);
+      return;
     }
+
+    const debounce = setTimeout(() => {
+      fetchStations();
+    }, 400);
+
+    return () => clearTimeout(debounce);
   }, [search, districtFilter]);
 
   const fetchStations = async () => {

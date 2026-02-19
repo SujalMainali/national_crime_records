@@ -65,11 +65,16 @@ export default function OfficersPage() {
   }, [districtFilter, stations]);
 
   useEffect(() => {
-    if (shouldShowList) {
-      fetchOfficers();
-    } else {
+    if (!shouldShowList) {
       setOfficers([]);
+      return;
     }
+
+    const debounce = setTimeout(() => {
+      fetchOfficers();
+    }, 400);
+
+    return () => clearTimeout(debounce);
   }, [search, stationFilter, statusFilter, districtFilter]);
 
   const fetchStations = async () => {
@@ -251,7 +256,7 @@ export default function OfficersPage() {
                 <button onClick={() => setStatusFilter('')} className="hover:text-red-500">×</button>
               </span>
             )}
-            <button 
+            <button
               onClick={() => { setSearch(''); setDistrictFilter(''); setStationFilter(''); setStatusFilter(''); }}
               className="text-sm text-red-500 hover:text-red-700 ml-2"
             >
@@ -294,70 +299,68 @@ export default function OfficersPage() {
             officers.map((officer) => (
               <Link
                 key={officer.id}
-              href={`/officers/${officer.id}`}
-              className="bg-white rounded-3xl border border-slate-200 p-6 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group"
-            >
-              {/* Circular Photo */}
-              <div className="flex flex-col items-center text-center">
-                <div className="relative">
-                  {officer.photo ? (
-                    <img 
-                      src={officer.photo} 
-                      alt={`${officer.first_name} ${officer.last_name}`}
-                      className="w-24 h-24 rounded-full object-cover border-4 border-slate-100 shadow-lg group-hover:border-[#0c2340]/20 transition-all"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#0c2340] to-[#1e3a5f] flex items-center justify-center text-white text-2xl font-bold border-4 border-slate-100 shadow-lg group-hover:border-[#0c2340]/20 transition-all">
-                      {officer.first_name?.charAt(0)}{officer.last_name?.charAt(0)}
-                    </div>
-                  )}
-                  {/* Status Indicator */}
-                  <span className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white ${
-                    officer.service_status === 'Active' ? 'bg-green-500' :
-                    officer.service_status === 'Retired' ? 'bg-gray-400' :
-                    officer.service_status === 'Suspended' ? 'bg-red-500' :
-                    'bg-yellow-500'
-                  }`}></span>
-                </div>
-
-                {/* Officer Info */}
-                <h3 className="text-lg font-semibold text-[#0c2340] mt-4 group-hover:text-[#1e3a5f] transition-colors">
-                  {officer.first_name} {officer.last_name}
-                </h3>
-                <p className="text-sm text-[#d4a853] font-medium">{officer.badge_number}</p>
-                
-                <span className="mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
-                  {officer.rank}
-                </span>
-
-                {/* Station Info */}
-                <div className="mt-4 pt-4 border-t border-slate-100 w-full">
-                  <div className="flex items-center justify-center gap-2 text-slate-600 text-sm">
-                    <svg className="w-4 h-4 text-[#0c2340]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    <span>{officer.station_name || 'Not Assigned'}</span>
+                href={`/officers/${officer.id}`}
+                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group"
+              >
+                {/* Circular Photo */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative">
+                    {officer.photo ? (
+                      <img
+                        src={officer.photo}
+                        alt={`${officer.first_name} ${officer.last_name}`}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-slate-100 shadow-lg group-hover:border-[#0c2340]/20 transition-all"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#0c2340] to-[#1e3a5f] flex items-center justify-center text-white text-2xl font-bold border-4 border-slate-100 shadow-lg group-hover:border-[#0c2340]/20 transition-all">
+                        {officer.first_name?.charAt(0)}{officer.last_name?.charAt(0)}
+                      </div>
+                    )}
+                    {/* Status Indicator */}
+                    <span className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white ${officer.service_status === 'Active' ? 'bg-green-500' :
+                        officer.service_status === 'Retired' ? 'bg-gray-400' :
+                          officer.service_status === 'Suspended' ? 'bg-red-500' :
+                            'bg-yellow-500'
+                      }`}></span>
                   </div>
-                  {officer.department && (
-                    <p className="text-xs text-slate-400 mt-1">{officer.department}</p>
-                  )}
-                </div>
 
-                {/* Status Badge */}
-                <div className="mt-3">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                    officer.service_status === 'Active' ? 'bg-green-100 text-green-700' :
-                    officer.service_status === 'Retired' ? 'bg-gray-100 text-gray-700' :
-                    officer.service_status === 'Suspended' ? 'bg-red-100 text-red-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {officer.service_status}
+                  {/* Officer Info */}
+                  <h3 className="text-lg font-semibold text-[#0c2340] mt-4 group-hover:text-[#1e3a5f] transition-colors">
+                    {officer.first_name} {officer.last_name}
+                  </h3>
+                  <p className="text-sm text-[#d4a853] font-medium">{officer.badge_number}</p>
+
+                  <span className="mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
+                    {officer.rank}
                   </span>
+
+                  {/* Station Info */}
+                  <div className="mt-4 pt-4 border-t border-slate-100 w-full">
+                    <div className="flex items-center justify-center gap-2 text-slate-600 text-sm">
+                      <svg className="w-4 h-4 text-[#0c2340]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      <span>{officer.station_name || 'Not Assigned'}</span>
+                    </div>
+                    {officer.department && (
+                      <p className="text-xs text-slate-400 mt-1">{officer.department}</p>
+                    )}
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="mt-3">
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${officer.service_status === 'Active' ? 'bg-green-100 text-green-700' :
+                        officer.service_status === 'Retired' ? 'bg-gray-100 text-gray-700' :
+                          officer.service_status === 'Suspended' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                      }`}>
+                      {officer.service_status}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))
-        )}
+              </Link>
+            ))
+          )}
         </div>
       )}
     </div>
