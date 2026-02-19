@@ -1,27 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery, queryOne } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 
-// GET all persons (with optional search)
+// GET all persons (with optional search and station filter)
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
+    if (!user || !hasPermission(user.role, 'persons.read')) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
+    const stationId = searchParams.get('station_id');
 
-    let query = `SELECT id, first_name, middle_name, last_name, national_id, gender, contact_number, city, created_at FROM persons`;
+    // Base query with station info through case_persons -> cases -> police_stations
+    let query = `
+      SELECT DISTINCT p.id, p.first_name, p.middle_name, p.last_name, 
+             p.national_id, p.gender, p.contact_number, p.city, p.state,
+             p.email, p.date_of_birth, p.photo, p.created_at,
+             (
+               SELECT string_agg(DISTINCT ps.station_name, ', ')
+               FROM case_persons cp2
+               JOIN cases c2 ON cp2.case_id = c2.case_id
+               JOIN police_stations ps ON c2.station_id = ps.id
+               WHERE cp2.person_id = p.id
+             ) as station_names,
+             (
+               SELECT string_agg(DISTINCT cp3.role, ', ')
+               FROM case_persons cp3
+               WHERE cp3.person_id = p.id
+             ) as roles_in_cases
+      FROM persons p
+    `;
+
     const params: any[] = [];
+    const conditions: string[] = [];
 
-    if (search) {
-      query += ` WHERE first_name ILIKE ? OR last_name ILIKE ? OR national_id ILIKE ?`;
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    // Station filter
+    if (stationId) {
+      query += `
+        JOIN case_persons cp ON cp.person_id = p.id
+        JOIN cases c ON cp.case_id = c.case_id
+      `;
+      conditions.push('c.station_id = ?');
+      params.push(stationId);
     }
 
-    query += ` ORDER BY created_at DESC LIMIT 100`;
+    // Search filter
+    if (search) {
+      conditions.push(`(p.first_name ILIKE ? OR p.last_name ILIKE ? OR p.national_id ILIKE ? OR p.contact_number ILIKE ? OR p.city ILIKE ?)`);
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    query += ` ORDER BY p.created_at DESC LIMIT 200`;
 
     const persons = await executeQuery(query, params);
     return NextResponse.json({ success: true, data: persons });
@@ -35,8 +72,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
+    if (!user || !hasPermission(user.role, 'persons.create')) {
+      return NextResponse.json({ success: false, message: 'Unauthorized – only Station Admin and Officers can add persons' }, { status: 403 });
     }
 
     const data = await request.json();
@@ -46,8 +83,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Map form fields to database columns
-    // Form uses: citizenship_no, phone, address_line, district, municipality, ward_no, state_province
-    // DB uses: national_id, contact_number, address, city, state
     const nationalId = data.citizenship_no || data.national_id || null;
     const contactNumber = data.phone || data.contact_number || null;
     const address = data.address_line || data.address || null;

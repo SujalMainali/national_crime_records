@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Total officers
     const totalOfficersRes = await executeQuery<any[]>(
-      user.role === 'Admin' 
+      user.role === 'Admin'
         ? `SELECT COUNT(*) as count FROM officers`
         : `SELECT COUNT(*) as count FROM officers WHERE station_id = $1`,
       user.role === 'Admin' ? [] : [user.station_id]
@@ -50,6 +50,13 @@ export async function GET(request: NextRequest) {
       []
     );
     const totalUsers = totalUsersRes[0]?.count || 0;
+
+    // Total persons
+    const totalPersonsRes = await executeQuery<any[]>(
+      `SELECT COUNT(*) as count FROM persons`,
+      []
+    );
+    const totalPersons = totalPersonsRes[0]?.count || 0;
 
     // Cases by status
     const casesByStatus = await executeQuery(
@@ -124,6 +131,7 @@ export async function GET(request: NextRequest) {
         totalStations: parseInt(totalStations),
         totalOfficers: parseInt(totalOfficers),
         totalUsers: parseInt(totalUsers),
+        totalPersons: parseInt(totalPersons),
         casesByStatus,
         casesByPriority,
         casesByCrimeType,

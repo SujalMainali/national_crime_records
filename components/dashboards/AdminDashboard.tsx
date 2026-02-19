@@ -7,37 +7,39 @@ import { SessionUser } from '@/lib/types';
 
 // Dynamic import for the chart component (no SSR)
 const CrimeTypePieChart = dynamic(
-  () => import('./CrimeTypePieChart'),
-  { 
-    ssr: false, 
-    loading: () => (
-      <div className="h-[400px] flex items-center justify-center">
-        <div className="flex items-center gap-2 text-slate-500">
-          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Loading chart...
-        </div>
-      </div>
-    )
-  }
+    () => import('./CrimeTypePieChart'),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="h-[400px] flex items-center justify-center">
+                <div className="flex items-center gap-2 text-slate-500">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading chart...
+                </div>
+            </div>
+        )
+    }
 );
 
 // Dynamic import for the map component (no SSR)
 const NepalDistrictMap = dynamic(
-  () => import('./NepalDistrictMap'),
-  { ssr: false, loading: () => (
-    <div className="h-[400px] bg-slate-100 rounded-2xl flex items-center justify-center">
-      <div className="flex items-center gap-2 text-slate-500">
-        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Loading map...
-      </div>
-    </div>
-  )}
+    () => import('./NepalDistrictMap'),
+    {
+        ssr: false, loading: () => (
+            <div className="h-[400px] bg-slate-100 rounded-2xl flex items-center justify-center">
+                <div className="flex items-center gap-2 text-slate-500">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading map...
+                </div>
+            </div>
+        )
+    }
 );
 
 interface DashboardProps {
@@ -115,10 +117,41 @@ export default function AdminDashboard({ user, stats }: DashboardProps) {
                 </div>
             </div>
 
+            {/* Persons Stat */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-lg">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#0c2340] to-[#1e3a5f] rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg className="w-6 h-6 text-[#d4a853]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium text-slate-500">Total Persons</div>
+                            <div className="text-3xl font-bold text-[#0c2340] mt-1">{stats?.totalPersons || 0}</div>
+                        </div>
+                    </div>
+                </div>
+                <Link href="/persons" className="bg-white rounded-3xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium text-slate-500">View All Persons</div>
+                            <div className="text-xs text-amber-600 mt-1 font-medium">View Only — Click to browse →</div>
+                        </div>
+                    </div>
+                </Link>
+            </div>
+
             {/* Admin Quick Actions */}
             <div className="bg-white rounded-3xl border border-slate-200 shadow-lg p-6">
                 <h2 className="text-lg font-semibold text-[#0c2340] mb-4">Administration</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link href="/stations" className="bg-gradient-to-r from-[#0c2340] to-[#1e3a5f] hover:from-[#1e3a5f] hover:to-[#2d4a6f] p-4 rounded-xl flex items-center gap-3 transition-all transform hover:scale-[1.02] shadow-lg">
                         <div className="p-2 bg-white/10 rounded-lg text-[#d4a853]">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,6 +173,18 @@ export default function AdminDashboard({ user, stats }: DashboardProps) {
                         <div>
                             <div className="font-bold text-white">Manage Officers</div>
                             <div className="text-xs text-slate-300">Add/Edit Police Officers</div>
+                        </div>
+                    </Link>
+
+                    <Link href="/persons" className="bg-slate-50 hover:bg-slate-100 p-4 rounded-xl border border-slate-200 flex items-center gap-3 transition-colors">
+                        <div className="p-2 bg-pink-100 rounded-lg text-pink-600">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div className="font-semibold text-[#0c2340]">View Persons</div>
+                            <div className="text-xs text-slate-500">Browse All Records (View Only)</div>
                         </div>
                     </Link>
 
@@ -203,7 +248,7 @@ export default function AdminDashboard({ user, stats }: DashboardProps) {
                     </div>
                 </div>
                 <div className="p-4">
-                    <NepalDistrictMap 
+                    <NepalDistrictMap
                         casesByDistrict={stats?.casesByDistrict || []}
                         statusFilter={mapStatusFilter}
                     />

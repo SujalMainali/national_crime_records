@@ -250,7 +250,7 @@ export default function StationAdminDashboard({ user, stats }: DashboardProps) {
       {/* Quick Actions */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-lg p-6">
         <h2 className="text-lg font-semibold text-[#0c2340] mb-4">Station Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link href="/officers" className="bg-gradient-to-r from-[#0c2340] to-[#1e3a5f] hover:from-[#1e3a5f] hover:to-[#2d4a6f] p-4 rounded-xl flex items-center gap-3 transition-all transform hover:scale-[1.02] shadow-lg">
             <div className="p-2 bg-white/10 rounded-lg text-[#d4a853]">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
@@ -278,6 +278,26 @@ export default function StationAdminDashboard({ user, stats }: DashboardProps) {
             <div>
               <div className="font-semibold text-[#0c2340]">View Cases</div>
               <div className="text-xs text-slate-500">Station Case Records</div>
+            </div>
+          </Link>
+
+          <Link href="/persons" className="bg-slate-50 hover:bg-slate-100 p-4 rounded-xl border border-slate-200 flex items-center gap-3 transition-colors">
+            <div className="p-2 bg-pink-100 rounded-lg text-pink-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            </div>
+            <div>
+              <div className="font-semibold text-[#0c2340]">Manage Persons</div>
+              <div className="text-xs text-slate-500">View & Edit Person Records</div>
+            </div>
+          </Link>
+
+          <Link href="/persons/new" className="bg-slate-50 hover:bg-slate-100 p-4 rounded-xl border border-slate-200 flex items-center gap-3 transition-colors">
+            <div className="p-2 bg-green-100 rounded-lg text-green-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            </div>
+            <div>
+              <div className="font-semibold text-[#0c2340]">Add Person</div>
+              <div className="text-xs text-slate-500">Register New Person</div>
             </div>
           </Link>
         </div>
@@ -378,12 +398,11 @@ export default function StationAdminDashboard({ user, stats }: DashboardProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                      caseItem.priority === 'Critical' ? 'bg-red-100 text-red-700' :
-                      caseItem.priority === 'High' ? 'bg-orange-100 text-orange-700' :
-                      caseItem.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
+                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${caseItem.priority === 'Critical' ? 'bg-red-100 text-red-700' :
+                        caseItem.priority === 'High' ? 'bg-orange-100 text-orange-700' :
+                          caseItem.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                      }`}>
                       {caseItem.priority}
                     </span>
                   </td>
