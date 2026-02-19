@@ -50,11 +50,11 @@ export async function GET(request: NextRequest) {
       params.push(parseInt(officerIdParam));
     }
 
-    // Only support search by exact FIR number (FIR numbers are unique)
+    // Search by FIR number or crime type
     if (search) {
-      const fir = search.trim();
-      query += ' AND c.fir_no = ?';
-      params.push(fir);
+      const term = `%${search.trim()}%`;
+      query += ' AND (c.fir_no ILIKE ? OR c.crime_type ILIKE ?)';
+      params.push(term, term);
     }
 
     query += ' ORDER BY c.fir_date_time DESC';
